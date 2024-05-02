@@ -80,7 +80,6 @@ class UI(tk.Tk):
 
 
 
-
 class UI2(UI):
 
     def __init__(self,controller, data):
