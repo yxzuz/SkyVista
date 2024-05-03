@@ -41,7 +41,7 @@ class Data:
 
     def mean_groupby_df(self, groupby_attr,mean_attr, df):
         mean_delay_by_atr_serie = df.groupby(groupby_attr)[mean_attr].mean()  # serie
-        print(mean_delay_by_atr_serie)
+        # print(mean_delay_by_atr_serie)
 
         return pd.DataFrame(mean_delay_by_atr_serie)  # dataframe
 
@@ -50,7 +50,7 @@ class Data:
         blank_month_df = pd.DataFrame({'MONTH': month_int, 'ARRIVAL_DELAY': 0.0})
 
         merged_df = pd.merge(blank_month_df, mean_delay_by_month_df, on='MONTH', how='left')
-        print(merged_df)
+        # print(merged_df)
         merged_df['ARRIVAL_DELAY'] = merged_df['ARRIVAL_DELAY_y'].fillna(merged_df['ARRIVAL_DELAY_x'])
         merged_df.drop(['ARRIVAL_DELAY_x', 'ARRIVAL_DELAY_y'], axis=1, inplace=True)
         return merged_df
