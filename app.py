@@ -249,7 +249,7 @@ class UI2(UI):
         #     widget.destroy()
         self.frame2.pack_forget()
         # self.bg_canvas.pack(fill=tk.BOTH,expand=True,anchor='nw')
-        #TODO
+        #CHANGES
 
         self.thread()
         # self.init_components()
@@ -290,7 +290,7 @@ class UI2(UI):
         frame = tk.Frame(self.frame2, bg='#87CEFA')
         frame.grid(row=0, column=0, columnspan=2, sticky='nsew')
 
-        #TODO
+        #CHANGES
         button = tk.Button(frame, text='Back', font=self.my_font_small, command=self.clear, bg='#B0C4DE', border=0)
         button.pack(side=tk.LEFT, anchor=tk.CENTER, pady=2)
 
