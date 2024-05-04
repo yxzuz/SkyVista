@@ -40,7 +40,7 @@ class Data:
 
 
     def mean_groupby_df(self, groupby_attr,mean_attr, df):
-        mean_delay_by_atr_serie = df.groupby(groupby_attr)[mean_attr].mean()  # serie
+        mean_delay_by_atr_serie = df.groupby(groupby_attr)[mean_attr].mean()  # series
         # print(mean_delay_by_atr_serie)
 
         return pd.DataFrame(mean_delay_by_atr_serie)  # dataframe
@@ -58,6 +58,10 @@ class Data:
 
     def all_airlines(self):
         return self._df['AIRLINE'].unique().tolist()
+
+    def get_correlation(self, df, x, y):
+        # print(round(df[x].corr(df[y]),2))
+        return round(df[x].corr(df[y]),2)
 
 if __name__ == '__main__':
     my_data_class = Data()
