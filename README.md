@@ -4,7 +4,7 @@ This program aims to help user make airlines decision to avoid flight delays
 
 
 ## Data source:
-from Kaggle
+from Kaggle: https://www.kaggle.com/datasets/usdot/flight-delays?select=flights.csv
 
 ## Installation requirement:
 ## *need to use python 3.12 version
