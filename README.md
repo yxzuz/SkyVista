@@ -14,5 +14,5 @@ from Kaggle: https://www.kaggle.com/datasets/usdot/flight-delays?select=flights.
 4. pillow~=10.3.0
 
 
-## How to run
+## How to run:
 python main.py
