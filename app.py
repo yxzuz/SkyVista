@@ -142,7 +142,7 @@ class UI2(UI):
         abbre_month = [calendar.month_abbr[x] for x in range(1, 13)]
         month_int = [x for x in range(1, 13)]
         mean_delay_by_month_df = self.controller.df_groupby('MONTH', 'ARRIVAL_DELAY', self.temp_data)  # dataframe
-        line_df = self.controller.data.merge_df_blank(mean_delay_by_month_df)
+        line_df = self.controller.data.merge_df_blank(mean_delay_by_month_df, 'ARRIVAL_DELAY')
         self.color_arr = ['#CD6889', '#6495ED', '#FFAEB9', '#872657', '#ADD8E6', '#FFA07A', '#87CEFA', '#8B1C62']
         self.ax.plot(month_int, line_df['ARRIVAL_DELAY'], color=self.color_arr[2])
         self.ax.set_xlim(1, 13)
@@ -509,25 +509,101 @@ class UI1(UI):
         self.corr = FigureCanvasTkAgg(fig, master=right_window)
         self.corr.get_tk_widget().pack(padx=30, pady=30, ipadx=50, ipady=50, anchor=tk.CENTER)
 
+    #TODO
+    def draw_line(self, sub_frame):
+        # print('line')
+        # print(4444,self.pick_attr2.get())
+        #
+        # print(self.temp_data[['ORIGIN_AIRPORT', 'DESTINATION_AIRPORT']])
 
-    def draw_bar(self):
-        print('bar')
-        print(self.temp_data[['ORIGIN_AIRPORT', 'DESTINATION_AIRPORT']])
-        # self.ax3.bar(self.temp_data.AIRLINE.unique(), )
-        pass
+        self.graph.draw()
+        self.ax3.clear()
+        abbre_month = [calendar.month_abbr[x] for x in range(1, 13)]
+        month_int = [x for x in range(1, 13)]
+        mean_attr_by_month_df = self.controller.df_groupby('MONTH', self.pick_attr2.get(), self.temp_data)  # dataframe
+        line_df = self.controller.data.merge_df_blank(mean_attr_by_month_df, self.pick_attr2.get())
+        self.ax3.plot(month_int, line_df[self.pick_attr2.get()], color=self.color_arr[2])
+        self.ax3.set_xlim(1, 13)
+        self.ax3.set_xticks(month_int, abbre_month)
+        self.ax3.set_title(f'Monthly trends of {self.pick_attr2.get().lower().replace('_',' ')}')
 
-    def draw_pie(self):
-        print('pie')
+        if self.pick_attr2.get() == 'DISTANCE':
+            self.ax3.set_ylabel(f'{self.pick_attr2.get()} (miles)')
+        else:
+            self.ax3.set_ylabel(f'{self.pick_attr2.get()} (minutes)')
+        self.ax3.set_xlabel('Month')
+        self.graph.draw()
+        self.reset_all_combo(sub_frame)
+
+
+    def overall_pie(self):
         total_flights = len(self.temp_data)
+        delayed = self.controller.delayed_counts(self.temp_data)
 
+        cancelled = self.controller.cancelled_counts(self.temp_data)
+
+        normal_flights = total_flights - (delayed + cancelled)
+
+        temp = self.controller.data.create_series(col=['delayed','cancelled','normal flights'], values=[delayed, cancelled, normal_flights])
+        print(temp)
         print(self.temp_data[['ORIGIN_AIRPORT', 'DESTINATION_AIRPORT']])
+        self.ax3.clear()
+        self.graph.draw()
 
-        pass
+        self.ax3.pie(temp, labels=temp.index, startangle=90, counterclock=False,
+               autopct='%1.1f%%')
+
+        self.ax3.legend(bbox_to_anchor=(0.79, 1))
+
+        self.ax3.set_title('airport: from route ABQ->DFW')
+        self.graph.draw()
+
+    def cancelled_pie(self):
+        total_flights = len(self.temp_data)
+        cancelled = self.controller.cancelled_counts(self.temp_data)
+        normal_flights = total_flights - cancelled
+        temp = self.controller.data.create_series(col=['cancelled', 'normal flights'],
+                                                  values=[cancelled, normal_flights])
+        self.ax3.pie(temp, labels=temp.index, startangle=90, counterclock=False,
+               autopct='%1.1f%%')
+        #, textprops={'color':'w'}
+
+        self.ax3.legend(bbox_to_anchor=(0.79, 1))
+
+        self.ax3.set_title('Pie chart of cancelled flights vs non-cancelled')
+        self.graph.draw()
+
+    def draw_pie(self,sub_frame):
+        atr = self.attribute2.get()
+        self.ax3.clear()
+        self.graph.draw()
+        if atr == 'overall':
+            self.overall_pie()
+        elif atr == 'cancelled vs non cancelled':
+            self.cancelled_pie()
+
+        self.reset_all_combo(sub_frame)
+
+
+    def on_click_atr(self, atr):
+        num_col = ['DEPARTURE_DELAY', 'TAXI_OUT', 'WHEELS_OFF',
+                   'ELAPSED_TIME', 'AIR_TIME', 'DISTANCE', 'WHEELS_ON', 'TAXI_IN',
+                   'SCHEDULED_ARRIVAL', 'ARRIVAL_TIME', 'ARRIVAL_DELAY', 'CANCELLED']
+
+        pie_attr = ['overall', 'cancelled vs non cancelled']
+        self.pick_attr2['values'] = num_col if atr == 'line graph' else pie_attr
+
+
     def other_graphs_tab(self, frame):
         left_window, right_window, sub_frame = self.two_side_window(frame, 'Create Visualization')
-        name = ['Type of graph:', 'Airline:', 'Origin airport:', 'Destination airport:']
+        # num_col = ['DEPARTURE_DELAY', 'TAXI_OUT', 'WHEELS_OFF',
+        #            'ELAPSED_TIME', 'AIR_TIME', 'DISTANCE', 'WHEELS_ON', 'TAXI_IN',
+        #            'SCHEDULED_ARRIVAL', 'ARRIVAL_TIME', 'ARRIVAL_DELAY', 'CANCELLED']
+        #
+        # pie_attr = ['overall', 'cancelled vs non cancelled']
+        name = ['Type of graph:', 'Airline:', 'Origin airport:', 'Destination airport:', 'Attribute: ']
         t=0
-        for i in range(1,8,2):
+        for i in range(1,10,2):
             label = tk.Label(sub_frame, text=name[t], font=self.my_font_small, bg='#B0C4DE')
             label.grid(row=i, column=0, sticky='w')
             t+=1
@@ -536,7 +612,8 @@ class UI1(UI):
         self.pick_type2 = ttk.Combobox(sub_frame, textvariable=self.type, font=self.my_font_small)
         self.pick_type2['state'] = 'readonly'
         self.pick_type2.grid(row=2, column=0, pady=5)
-        self.pick_type2['values'] = ['bar graph', 'pie graph']
+        self.pick_type2['values'] = ['line graph', 'pie graph']
+        self.pick_type2.bind("<<ComboboxSelected>>", lambda event:self.on_click_atr(self.type.get()))
 
         self.airlines2 = tk.StringVar()
         self.pick_airline2 = ttk.Combobox(sub_frame, textvariable=self.airlines2, font=self.my_font_small)
@@ -547,7 +624,7 @@ class UI1(UI):
         self.origin_airport2 = tk.StringVar()
         self.pick_origin2 = ttk.Combobox(sub_frame, textvariable=self.origin_airport2, font=self.my_font_small)
         self.pick_airline2.bind("<<ComboboxSelected>>",
-                               lambda event: self.controller.get_airline_data(self.pick_airline2.get(),widget=2))  # set values
+                               lambda event: self.controller.get_airline_data(self.pick_airline2.get(), widget=2))  # set values
         self.pick_origin2['state'] = 'readonly'
         self.pick_origin2.grid(row=6, column=0, pady=5)
 
@@ -559,12 +636,22 @@ class UI1(UI):
         self.pick_dest2.grid(row=8, column=0, pady=5)
         self.pick_dest2.bind("<<ComboboxSelected>>", lambda x: self.controller.get_dest_data(self.dest_airport2.get()))
 
+        self.attribute2 = tk.StringVar()
+        self.pick_attr2 = ttk.Combobox(sub_frame, textvariable=self.attribute2, font=self.my_font_small)
+        self.pick_attr2.grid(row=10,column=0, pady=5)
+        self.pick_attr2['state'] = 'readonly'
+
+
+
+
         button = tk.Button(left_window, text='Generate', width=10,
-                           font=self.my_font_small, command=lambda: self.draw_bar() if self.pick_type2.get() =='bar graph' else self.draw_pie())
+                           font=self.my_font_small, command=lambda: self.draw_line(sub_frame) if self.pick_type2.get() =='line graph' else self.draw_pie(sub_frame))
         button.pack(pady=35, ipady=10)
 
         Reset_btn = tk.Button(left_window, text='Reset', width=10, command=lambda: self.reset_all_combo(sub_frame), font=self.my_font_small)
         Reset_btn.pack(ipady=10)
+
+
 
 
         fig, self.ax3 = plt.subplots(figsize=(8, 5))
@@ -723,7 +810,7 @@ class UI1(UI):
         right_window.pack(side=tk.RIGHT, fill="both", expand=True)
         left_window.configure(bg='#6E7B8B')
 
-        self.notebook.bind("<<NotebookTabChanged>>", lambda e: self.reset_combo())
+        # self.notebook.bind("<<NotebookTabChanged>>", lambda e: self.reset_combo())
         # self.correlation_tab(frame)
         # left_window.grid(row=0,column=0, columnspan=3,sticky='w')
         # right_window.grid(row=0,column=3,columnspan=2) #sticky='e'
