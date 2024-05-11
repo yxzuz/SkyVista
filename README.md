@@ -22,11 +22,15 @@ from Kaggle: https://www.kaggle.com/datasets/usdot/flight-delays?select=flights.
 ![uml](skyvista_uml.png)
 
 ## sequence diagram
+![sequence_diagram.jpg](sequence_diagram.jpg)
 
 ## Class Describe
 UI: Abstract class of UI which will be implemented later in UI1 and UI2\
 UI1: Concrete implementation of UI and will have the main functionality on data exploration part of the program  
-UI2: Concrete implementation of UI and will have the main functionality on storytelling part of program
+UI2: Concrete implementation of UI and will have the main functionality on storytelling part of program   
+Controller: Controller part of MVC design pattern  
+Data: Model part of MVC design pattern
+
 ## Repository
 [Link to repository](https://github.com/yxzuz/SkyVista)
 
@@ -54,7 +58,7 @@ On Mac use
 ```
 .\env\Scripts\activate
 ```
-5. Install all requirement in requirements.txt and make sure you use python 3.12
+5. Install all requirements in requirements.txt and make sure you use python 3.12
 ```
 pip install -r requirements.txt
 ```
