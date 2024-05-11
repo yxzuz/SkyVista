@@ -1,23 +1,23 @@
-
-# for controller
-from database import Data
-from app import UI,UI1,UI2
+"""Controller in MVC"""
+# from database import Data
 import numpy as np
+from app import UI,UI1,UI2
+
 
 class Controller:
     def __init__(self,data):
         self.data = data
-        #default
-        # self.ui1 = UI1(self,self.data.df)
-        # self.ui2 = None
-        # self.state = 1
+        # default
+        self.ui1 = UI1(self,self.data.df)
+        self.ui2 = None
+        self.state = 1
         # page 2 first
-        self.state = 2
-        self.ui2 = UI2(self, self.data.df)
+        # self.state = 2
+        # self.ui2 = UI2(self, self.data.df)
 
     def switch_mode(self, mode):
-        # change application state and switch the mode
-        print('state', self.state)
+        """change application state and switch the mode"""
+        # print('state', self.state)
         if mode == 'Explore' and self.state == 2:
             self.ui2.destroy()
             self.ui1 = UI1(self, self.data.df)
@@ -31,41 +31,50 @@ class Controller:
             # self.ui2.run()
 
     def run(self):
-        # self.ui1.run()
-        #page 2 first
-        self.ui2.run()
+        """run the program"""
+        self.ui1.run()
+        # page 2 first
+        # self.ui2.run()
 
     def df_groupby(self, groupby_attr, mean_attr, df):
-        # return dataframe of groupby atr and find mean
+        """return dataframe of groupby attribute and find mean"""
         return self.data.mean_groupby_df(groupby_attr, mean_attr, df)
 
 
     def get_unique_airlines(self,df):
+        """return airlines"""
         return df.AIRLINE.unique().tolist()
 
     def get_all_origin(self):
+        """return all origin airport"""
         return self.data.all_origin()
 
     def get_all_dest(self,orig):
+        """filtered data corresponding to origin and set pick_dest(combobox) value for ui2"""
         self.ui2.pick_dest['values'] = self.data.all_destination(orig)
         # return self.data.all_destination(orig)
 
     def filter_origin_and_dest(self, orig, dest):
+        """filtered data corresponding to origin and destination and set temp_data for ui2"""
         self.ui2.temp_data = self.data.filtered_attributes_dist(orig, dest)
 
     def get_all_attributes(self):
+        """return all attributes"""
         return self.data.all_attributes()
 
     def get_all_airlines(self):
+        """return all available airlines"""
         return self.data.all_airlines()
 
     def stat_columns(self):
+        """return useful list for creating treeview"""
         columns_atr = ["STATISTICS",'ARRIVAL_DELAY', 'AIR_TIME', 'DISTANCE', 'ELAPSED_TIME']
         stat = ['mean', 'std', 'min', 'q1', 'q2', 'q3', 'max']
         label = ['Statistics', 'Arrival delay', 'Air time', 'Distance','Elapsed time']
         return columns_atr, stat, label
 
     def tree_view_data(self, stat, df):
+        """return list of calculated statistic"""
         function = {
             'mean': lambda df: round(df.mean(),2).tolist(),
             'std': lambda df: round(df.std(), 2).tolist(),
@@ -90,128 +99,87 @@ class Controller:
         #     # "DISTANCE": [800.959041, 573.256670, 184, 280, 666, 1242, 2611],
         #     # "ELAPSED_TIME": [145.739040, 76.236987, 49, 90, 129, 185.75, 447],
         }
-        # print(df.head())
         tree_view = []
         for row in stat:
             lst = function[row](df)
             data[row] = lst
-            # tree_view.append((row, lst))
-        # print(7777,data)
-        # for row in range(len(col)):
-        # function['mean'](my_df)
 
-
-
-        for index, c in zip(stat, range(len(stat))):
+        for index in stat:
             temp = []
             temp.append(index)
             for val in data[index]:
                 temp.append(val)
             tree_view.append(temp)
-            # tree_view.append((index, data[index][c], data[index][c], data[index][c], data[index][c]))
         return tree_view
 
-    def get_airline_data(self, airline,ui_num=1):
-        # return list corresponding to airline picked for combobox pick_origin
-        # print('airline:', airline)
-        # print(ui_num)
+    def get_airline_data(self, airline,widget=None,ui_num=1):
+        """return list corresponding to airline picked for combobox pick_origin"""
+        print('airline:', airline)
+        print(ui_num)
         if ui_num == 1:
             self.ui1.temp_data = self.data.df[self.data.df.AIRLINE == airline] # update temp data
-            self.ui1.pick_origin['values'] = self.data.df[self.data.df.AIRLINE == airline].ORIGIN_AIRPORT.unique().tolist() # set value for origin
+            if widget is None:
+                self.ui1.pick_origin['values'] = self.data.df[self.data.df.AIRLINE == airline].ORIGIN_AIRPORT.unique().tolist() # set value for origin
+            else:
+                self.ui1.pick_origin2['values'] = self.data.df[
+                    self.data.df.AIRLINE == airline].ORIGIN_AIRPORT.unique().tolist()
+
         else:
-            self.ui2.temp_data = self.data.df[self.data.df.AIRLINE == airline] # update temp data
-            self.ui2.pick_origin['values'] = self.data.df[self.data.df.AIRLINE == airline].ORIGIN_AIRPORT.unique().tolist() # set value for origin
+            # update temp data
+            self.ui2.temp_data = self.data.df[self.data.df.AIRLINE == airline]
+            # set value for origin
+            self.ui2.pick_origin['values'] = self.data.df[self.data.df.AIRLINE == airline].ORIGIN_AIRPORT.unique().tolist()
 
 
 
-    def get_origin_data(self,airline,origin,ui_num=1):
-        # filtered data of picked origin for combobox pick_dest
-        # print(7777, self.ui.temp_data)
-        # print('get origin')
+
+    def get_origin_data(self,airline,origin,widget=None,ui_num=1):
+        """filtered data of picked origin for combobox pick_dest"""
+        if airline == '' or origin == '':
+            return self.report_error()
         if ui_num == 1:
             self.ui1.temp_data = self.ui1.temp_data[self.ui1.temp_data.ORIGIN_AIRPORT == origin]
-            self.ui1.pick_dest['values'] = self.data.df[(self.data.df.ORIGIN_AIRPORT == origin) & (self.data.df.AIRLINE == airline)].DESTINATION_AIRPORT.unique().tolist()
-            # print(self.data.df[(self.data.df.ORIGIN_AIRPORT == 'ADK') & (self.data.df.AIRLINE == 'VX')].DESTINATION_AIRPORT.unique().tolist())
+            if widget is None:
+                self.ui1.pick_dest['values'] = self.data.df[(self.data.df.ORIGIN_AIRPORT == origin) & (self.data.df.AIRLINE == airline)].DESTINATION_AIRPORT.unique().tolist()
+
+            else:
+                self.ui1.pick_dest2['values'] = self.data.df[(self.data.df.ORIGIN_AIRPORT == origin) & (
+                            self.data.df.AIRLINE == airline)].DESTINATION_AIRPORT.unique().tolist()
         else:
             self.ui2.temp_data = self.ui2.temp_data[self.ui2.temp_data.ORIGIN_AIRPORT == origin]
             self.ui2.pick_dest['values'] = self.data.df[(self.data.df.ORIGIN_AIRPORT == origin) & (self.data.df.AIRLINE == airline)].DESTINATION_AIRPORT.unique().tolist()
 
+    def report_error(self):
+        """tells ui to report error"""
+        self.ui1.report_error()
+
 
     def get_dest_data(self,dest,ui_num=1):
-        # filtered data of picked dest for creating hist
-        # print('destttt')
+        """filtered data of picked dest for creating hist"""
+        if dest == '' or self.ui1.temp_data is None:
+            return self.report_error()
         if ui_num == 1:
             self.ui1.temp_data = self.ui1.temp_data[self.ui1.temp_data.DESTINATION_AIRPORT == dest]
         else:
             self.ui2.temp_data = self.ui2.temp_data[self.ui2.temp_data.DESTINATION_AIRPORT == dest]
-        # print(self.ui2.temp_data.loc[:,['DESTINATION_AIRPORT','ORIGIN_AIRPORT']])
+
     def total_flights_count(self, sorted_df):
+        """return count of dataframe's total flights"""
         return np.array(sorted_df['AIRLINE'].value_counts().tolist())
 
+    def delayed_counts(self, temp):
+        """return count of dataframe's delayed(arrival and departure) flights"""
+        return len(temp[(temp['ARRIVAL_DELAY']>0) | (temp['DEPARTURE_DELAY']>0)])
+
+    def cancelled_counts(self, temp):
+        """return count of dataframe's cancelled flights"""
+        return len(temp[temp['CANCELLED'] == 1])
+
+
     def arrival_delay_counts(self, sorted_df, total_flights):
+        """adding 0s to delay_flights list to use this later with stacked bar graph"""
         delayed_flights = sorted_df[sorted_df.ARRIVAL_DELAY > 0]['AIRLINE'].value_counts().tolist()
         while len(total_flights) != len(delayed_flights):
             delayed_flights.append(0)
         return np.array(delayed_flights)
 
-
-if __name__ == '__main__':
-    data = Data()
-    c = Controller(data)
-    stat = ['mean', 'std', 'min', 'q1', 'q2', 'q3', 'max']
-    col = ['ARRIVAL_DELAY', 'AIR_TIME', 'DISTANCE', 'ELAPSED_TIME']
-
-    """
-    ARRIVAL_DELAY
-    AIR_TIME
-    DISTANCE
-    ELAPSED_TIME
-    """
-    """
-    """
-    print('-------')
-    filtered = data.df[(data.df.ORIGIN_AIRPORT == 'CHS') & (data.df.DESTINATION_AIRPORT == 'IAH')]
-    my_df = filtered.loc[:,col].head()
-    tree_view = c.tree_view_data(stat, my_df)
-    print(43434,tree_view)
-    print('+++++')
-    print(my_df.mean().tolist()) # Mean
-    print(round(my_df.std(),2).tolist())  # std
-    print(my_df.min().tolist())  # min
-    print(my_df.quantile(0.25).tolist())  # 25
-    print(my_df.quantile(0.5).tolist()) # 50
-    print(my_df.quantile(0.75).tolist()) # 75
-    print(my_df.max().tolist()) # max
-
-
-
-    # function = {
-    #             'mean': lambda df: df.mean().tolist(),
-    #             'std': lambda df: round(df.std(), 2).tolist(),
-    #             'min': lambda df: df.min().tolist(),
-    #             'q1': lambda df: df.quantile(0.25).tolist(),
-    #             'q2': lambda df: df.quantile(0.50).tolist(),
-    #             'q3': lambda df: df.quantile(0.75).tolist(),
-    #             'max': lambda df: df.max().tolist()
-    #             }
-    # print(888888, function['mean'](my_df))
-    # _mean = lambda df: df.mean().tolist()
-    # _std = lambda df: df.std().tolist()
-    # _min = lambda df: df.min().tolist()
-    # _25 = lambda df: df.quantile(0.25).tolist()
-    # _50 = lambda df: df.quantile(0.50).tolist()
-    # _75 = lambda df: df.quantile(0.75).tolist()
-    # _max = lambda df: df.max().tolist()
-
-    # for c in range(len(stat)):
-    # for i,c in zip(stat,len(stat):
-    # # for i,d in zip(stat,x):
-    #     print(f'({i},{x['ARRIVAL_DELAY'][c]},{x['AIR_TIME'][c]},{x['DISTANCE'][c]},,{x['ELAPSED_TIME'][c]})')
-
-    # for i, c in zip(stat, range(len(stat))):
-    #     print(f'({i},{x["ARRIVAL_DELAY"][c]},{x["AIR_TIME"][c]},{x["DISTANCE"][c]},{x["ELAPSED_TIME"][c]})')
-
-    # print(c.get_all_origin())
-    #
-    # print(c.get_airline_data('AA'))
-    # print(c.get_origin_data('1',2))
