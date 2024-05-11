@@ -17,6 +17,8 @@ from Kaggle: https://www.kaggle.com/datasets/usdot/flight-delays?select=flights.
 4. pillow~=10.3.0
 5. seaborn~=0.13.2
 
+[video demonstration](https://youtu.be/Q0uLU5h3Bag)
+
 ## Design pattern mvc pattern
 ## UML
 ![uml](skyvista_uml.png)
