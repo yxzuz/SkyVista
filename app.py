@@ -333,7 +333,6 @@ class UI1(UI):
     def __init__(self, controller, data):
         super().__init__(controller, data)
         self.title('SkyVistaEx')
-        print('init')
         self.my_font_big = ('Georgia', 20)
         self.my_font_small = ('Georgia', 16)
         self.color_arr = ['#CD6889', '#6495ED', '#FFAEB9', '#872657', '#ADD8E6', '#FFA07A', '#87CEFA', '#8B1C62']
@@ -359,7 +358,6 @@ class UI1(UI):
         ax.clear()
         self.corr.draw()
         if x and y:
-            print(x, y)
             ax.scatter(x=self.data[:1000][x], y=self.data[:1000][y], c=self.color_arr[1])
             ax.set_ylabel(f'{y}')
             ax.set_xlabel(f'{x}')
@@ -543,10 +541,11 @@ class UI1(UI):
 
     def draw_line(self):
         """draw line graph"""
-        self.graph.get_tk_widget().pack_forget()
-        fig, self.ax3 = plt.subplots(figsize=(8, 5))
-        self.graph = FigureCanvasTkAgg(fig, master=self.right_window3)
-        self.graph.get_tk_widget().pack(padx=30, pady=30, ipadx=50, ipady=50, anchor=tk.CENTER)
+        self.graph2.get_tk_widget().grid_forget()
+        self.graph.get_tk_widget().grid(row=0,column=0,padx=30, pady=30, ipadx=50, ipady=50)
+        # fig, self.ax3 = plt.subplots(figsize=(8, 5))
+        # self.graph = FigureCanvasTkAgg(fig, master=self.right_window3)
+        # self.graph.get_tk_widget().pack(padx=30, pady=30, ipadx=50, ipady=50, anchor=tk.CENTER)
 
         if self.pick_attr2.get():
             self.graph.draw()
@@ -577,66 +576,74 @@ class UI1(UI):
 
             temp = self.controller.data.create_series(col=['delayed', 'cancelled', 'normal flights'],
                                                       values=[delayed, normal_flights])
-            self.ax3.clear()
-            self.graph.draw()
+            self.ax4.clear()
+            self.graph2.draw()
 
-            self.ax3.pie(temp, labels=temp.index, startangle=90, counterclock=False,
+            self.ax4.pie(temp, labels=temp.index, startangle=90, counterclock=False,
                          autopct='%1.1f%%', colors=self.color_arr)
 
-            self.ax3.legend(bbox_to_anchor=(0.79, 1))
+            self.ax4.legend(bbox_to_anchor=(0.79, 1))
 
-            self.ax3.set_title('Pie chart of Delayed and Normal Flights')
-            self.graph.draw()
+            self.ax4.set_title('Pie chart of Delayed and Normal Flights')
+            self.graph2.draw()
         else:
             self.report_error()
 
     def overall_pie(self):
         """draw overall pie graph of delayed, cancelled comparing to normal flights"""
-        total_flights = len(self.temp_data)
-        delayed = self.controller.delayed_counts(self.temp_data)
+        if self.dest_airport2.get() and not self.temp_data.empty:
+            total_flights = len(self.temp_data)
+            delayed = self.controller.delayed_counts(self.temp_data)
 
-        cancelled = self.controller.cancelled_counts(self.temp_data)
+            cancelled = self.controller.cancelled_counts(self.temp_data)
 
-        normal_flights = total_flights - (delayed + cancelled)
+            normal_flights = total_flights - (delayed + cancelled)
 
-        temp = self.controller.data.create_series(col=['delayed', 'cancelled', 'normal flights'],
-                                                  values=[delayed, cancelled, normal_flights])
-        self.ax3.clear()
-        self.graph.draw()
+            temp = self.controller.data.create_series(col=['delayed', 'cancelled', 'normal flights'],
+                                                      values=[delayed, cancelled, normal_flights])
+            self.ax4.clear()
+            self.graph2.draw()
 
-        self.ax3.pie(temp, labels=temp.index, startangle=90, counterclock=False,
-                     autopct='%1.1f%%', colors=self.color_arr)
+            self.ax4.pie(temp, labels=temp.index, startangle=90, counterclock=False,
+                         autopct='%1.1f%%', colors=self.color_arr)
 
-        self.ax3.legend(bbox_to_anchor=(0.79, 1))
+            self.ax4.legend(bbox_to_anchor=(0.79, 1))
 
-        self.ax3.set_title('Pie chart of Delayed, Cancelled, and Normal Flights')
-        self.graph.draw()
+            self.ax4.set_title('Pie chart of Delayed, Cancelled, and Normal Flights')
+            self.graph2.draw()
 
     def cancelled_pie(self):
-        total_flights = len(self.temp_data)
-        cancelled = self.controller.cancelled_counts(self.temp_data)
-        normal_flights = total_flights - cancelled
-        temp = self.controller.data.create_series(col=['cancelled', 'normal flights'],
-                                                  values=[cancelled, normal_flights])
-        self.ax3.pie(temp, labels=temp.index, startangle=90, counterclock=False,
-                     autopct='%1.1f%%', colors=self.color_arr)
+        # print('cancel', self.temp_data is None)
+        if self.dest_airport2.get() and not self.temp_data.empty:
+            total_flights = len(self.temp_data)
+            cancelled = self.controller.cancelled_counts(self.temp_data)
+            normal_flights = total_flights - cancelled
+            temp = self.controller.data.create_series(col=['cancelled', 'normal flights'],
+                                                      values=[cancelled, normal_flights])
+            self.ax4.clear()
+            self.graph2.draw()
+            self.ax4.pie(temp, labels=temp.index, startangle=90, counterclock=False,
+                         autopct='%1.1f%%', colors=self.color_arr)
 
-        self.ax3.legend(bbox_to_anchor=(0.79, 1))
+            self.ax4.legend(bbox_to_anchor=(0.79, 1))
 
-        self.ax3.set_title('A pie chart comparing cancelled and non-cancelled flights')
-        self.graph.draw()
+            self.ax4.set_title('A pie chart comparing cancelled and non-cancelled flights')
+            self.graph2.draw()
 
     def draw_pie(self):
         """draw pie graph based on attribute"""
         atr = self.attribute2.get()
-        self.ax3.clear()
-        self.graph.draw()
-        if atr == 'overall':
-            self.overall_pie()
-        elif atr == 'Cancelled vs not cancelled flights':
-            self.cancelled_pie()
-        else:
-            self.delayed_pie()
+        # self.ax3.clear()
+        # self.graph.draw()
+        self.graph.get_tk_widget().grid_forget()
+        self.graph2.get_tk_widget().grid(row=0,column=0,padx=30, pady=30, ipadx=50, ipady=50)
+        if self.temp_data is not None:
+            if atr == 'overall':
+                self.overall_pie()
+            elif atr == 'Cancelled vs not cancelled flights':
+                self.cancelled_pie()
+            else:
+                self.delayed_pie()
 
     def on_click_atr(self, atr):
         """change pick_attr2 values based on type of graph user selected"""
@@ -708,19 +715,20 @@ class UI1(UI):
         reset_btn = tk.Button(left_window, text='Reset', width=10,
                               command=lambda: self.reset_all_combo(sub_frame, self.graph),
                               font=self.my_font_small)
+        reset_btn.bind("<Button-1>", lambda e:self.reset_all_combo(sub_frame, self.graph2))
         reset_btn.pack(pady=10)
 
         reset_btn.bind("<Button-1>", lambda e: UI1.reset_canvas(self.ax3, self.graph), add='+')
 
-        fig, self.ax3 = plt.subplots(figsize=(8, 5))
+        fig, self.ax3 = plt.subplots(figsize=(5, 3))
         self.graph = FigureCanvasTkAgg(fig, master=self.right_window3)
-        self.graph.get_tk_widget().pack(padx=30, pady=30, ipadx=50, ipady=50, anchor=tk.CENTER)
+        self.graph.get_tk_widget().grid(row=0,column=0,padx=30, pady=30, ipadx=50, ipady=50)
 
     @staticmethod
     def reset_canvas(ax, canvas):
         """reset canvas and axes"""
         ax.clear()
-        canvas.get_tk_widget().delete("all")
+        ax.cla()
 
     def distribution_tab(self, left_window):
         """distribution tab components"""
@@ -811,7 +819,6 @@ class UI1(UI):
         pick_dest['values'] = self.controller.data.all_destination(origin)
 
     def init_components(self):
-        print('init')
         self.menubar()
         self.notebook = ttk.Notebook(self, width=900, height=500, style="Custom.TNotebook")
         self.notebook.pack(pady=10, expand=True, fill="both")
@@ -856,10 +863,12 @@ class UI1(UI):
         right_window.pack(side=tk.RIGHT, fill="both", expand=True)
         left_window.configure(bg='#B0C4DE')
 
+        self.graph.get_tk_widget().pack_forget()
+        fig, self.ax4 = plt.subplots(figsize=(5, 3))
+        self.graph2 = FigureCanvasTkAgg(fig, master=self.right_window3)
+        self.graph2.get_tk_widget().grid(row=0,column=0,padx=30, pady=30, ipadx=50, ipady=50)
         # self.notebook.bind("<<NotebookTabChanged>>", lambda e: self.reset_all_combo(self.frame1_2), add='+')
-        # self.correlation_tab(frame)
-        # left_window.grid(row=0,column=0, columnspan=3,sticky='w')
-        # right_window.grid(row=0,column=3,columnspan=2) #sticky='e'
+
 
     def report_error(self):
         """report error when combobox value is missing"""
