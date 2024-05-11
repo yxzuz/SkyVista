@@ -17,7 +17,6 @@ class Controller:
 
     def switch_mode(self, mode):
         """change application state and switch the mode"""
-        # print('state', self.state)
         if mode == 'Explore' and self.state == 2:
             self.ui2.destroy()
             self.ui1 = UI1(self, self.data.df)
@@ -114,8 +113,6 @@ class Controller:
 
     def get_airline_data(self, airline,widget=None,ui_num=1):
         """return list corresponding to airline picked for combobox pick_origin"""
-        print('airline:', airline)
-        print(ui_num)
         if ui_num == 1:
             self.ui1.temp_data = self.data.df[self.data.df.AIRLINE == airline] # update temp data
             if widget is None:
