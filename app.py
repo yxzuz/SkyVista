@@ -65,6 +65,9 @@ class UI(tk.Tk):
             menu=file_menu
         )
 
+    def report_error(self):
+        messagebox.showwarning('Warning', 'Please select all remaining field(s)')
+
     @abstractmethod
     def init_components(self):
         pass
@@ -401,6 +404,9 @@ class UI1(UI):
         self.my_font_big = ('Georgia', 20)
         self.my_font_small = ('Georgia', 16)
         self.color_arr = ['#CD6889', '#6495ED', '#FFAEB9', '#872657', '#ADD8E6', '#FFA07A', '#87CEFA', '#8B1C62']
+        self.num_col = ['DEPARTURE_DELAY', 'TAXI_OUT', 'WHEELS_OFF',
+                   'ELAPSED_TIME', 'AIR_TIME', 'DISTANCE', 'WHEELS_ON', 'TAXI_IN',
+                   'SCHEDULED_ARRIVAL', 'ARRIVAL_TIME', 'ARRIVAL_DELAY', 'CANCELLED']
         self.init_components()
 
     def two_side_window(self,root, header: str):
@@ -411,13 +417,14 @@ class UI1(UI):
         sub_frame = tk.Frame(l_frame, bg='#B0C4DE')
         sub_frame.pack(anchor='nw')
         label = tk.Label(sub_frame, text=header, font=self.my_font_big, bg='#B0C4DE') # Header
-        label.grid(row=0, column=0, sticky='w', pady=30)
+        label.grid(row=0, columnspan=1, sticky='n', pady=10)
         return l_frame, r_frame, sub_frame
 
-    def draw_corr(self,x, y, ax):
+    def draw_corr(self, x, y, ax):
         ax.clear()
         self.corr.draw()
         if x and y:
+            print(x,y)
             ax.scatter(x=self.data[:1000][x], y=self.data[:1000][y], c=self.color_arr[1])
             ax.set_ylabel(f'{y}')
             ax.set_xlabel(f'{x}')
@@ -426,46 +433,157 @@ class UI1(UI):
 
 
     def display_corr(self, x, y):
+        # print(x,y)
         if x and y:
             corre = self.controller.data.get_correlation(self.data, x, y)
             self.corr_label.configure(text=f'Correlation: {corre}')
+        else:
+            self.report_error()
+
 
     def draw_heat_map(self):
 
         newWindow = tk.Toplevel(self)
-        # newWindow.columnconfigure(0,weight=1)
+        # newWindow.columnconfigure(0,weight=4)
+        # newWindow.rowconfigure(0, weight=1)
+        # newWindow.rowconfigure(1, weight=4)
+        # newWindow.rowconfigure(1, weight=1)
         # newWindow.columnconfigure(1, weight=1)
+        # newWindow.columnconfigure(2, weight=1)
         frame = tk.Frame(newWindow)
+
         # frame.pack()
-        frame.grid(row=0,column=0,padx=0, columnspan=1)
+        frame.grid(row=0,column=0, sticky='nsew', ipady=2)
 
         frame2 = tk.Frame(newWindow)
         # frame2.pack()
-        frame2.grid(row=0,column=2,padx=0, columnspan=1)
+        frame2.grid(row=0,column=1, sticky='nsew')
 
-        fig, ax = plt.subplots(figsize=(7, 7))
+        # frame3 = tk.Frame(newWindow,bg='pink')
+        # frame3.grid(row=1, column=0)
+
+        fig, ax = plt.subplots()
         self.corr = FigureCanvasTkAgg(fig, master=frame)
-        self.corr.get_tk_widget().pack(anchor='nw')
+        self.corr.get_tk_widget().pack(side=tk.TOP)
         num_col = self.controller.data.num_attributes()
-        temp_corr = self.data.loc[:, num_col[:7]]
-        sns.heatmap(temp_corr.corr(),
-                    square=True,
-                    linewidths=0.25,
-                    linecolor=(0, 0, 0),
-                    cmap=sns.color_palette("coolwarm"),
-                    annot=True,annot_kws={"fontsize": 6})
-
-        fig2, ax2 = plt.subplots(figsize=(7, 7))
-        self.corr2 = FigureCanvasTkAgg(fig2, master=frame2)
-        self.corr2.get_tk_widget().pack()
-        num_col = self.controller.data.num_attributes()
-        temp_corr = self.data.loc[:, num_col[7:]]
-        sns.heatmap(temp_corr.corr(),
+        temp_corr = self.data.loc[:, num_col[:4]]
+        g1 = sns.heatmap(temp_corr.corr(),
                     square=True,
                     linewidths=0.25,
                     linecolor=(0, 0, 0),
                     cmap=sns.color_palette("coolwarm"),
                     annot=True)
+        # g1.set_yticklabels(g1.get_yticklabels(), rotation=-270, fontsize=8)
+        # g1.set_xticklabels(g1.get_yticklabels(), rotation=0, fontsize=8)
+
+        fig2, ax2 = plt.subplots()
+        self.corr2 = FigureCanvasTkAgg(fig2, master=frame2)
+        self.corr2.get_tk_widget().pack()
+        temp_corr = self.data.loc[:, num_col[4:]]
+        g2 = sns.heatmap(temp_corr.corr(),
+                    square=True,
+                    linewidths=0.25,
+                    linecolor=(0, 0, 0),
+                    cmap=sns.color_palette("coolwarm"),
+                    annot=True)
+        # g2.set_yticklabels(g2.get_yticklabels(), rotation=-270, fontsize=8)
+        # g2.set_xticklabels(g2.get_yticklabels(), rotation=0, fontsize=8)
+        for graph in [g1,g2]:
+            graph.set_yticklabels(graph.get_yticklabels(), rotation=-270, fontsize=8)
+            graph.set_xticklabels(graph.get_xticklabels(), rotation=0, fontsize=8)
+        #todo
+
+        # fig3, ax3 = plt.subplots()
+        # self.corr3 = FigureCanvasTkAgg(fig3, master=frame3)
+        # self.corr3.get_tk_widget().pack()
+        # temp_corr = self.data.loc[:, num_col[7:]]
+        # g3 = sns.heatmap(temp_corr.corr(),
+        #             square=True,
+        #             linewidths=0.25,
+        #             linecolor=(0, 0, 0),
+        #             cmap=sns.color_palette("coolwarm"),
+        #             annot=True)
+        # g3.set_yticklabels(g3.get_yticklabels(), rotation=-270, fontsize=8)
+        # g3.set_xticklabels(g3.get_yticklabels(), rotation=0, fontsize=8)
+
+
+
+    def update_temp_data(self, orig, dest):
+        self.temp_data = self.controller.data.filtered_attributes_dist(orig, dest)
+    def create_tree_view(self, tree, descriptive, columns, orig, dest):
+        """add data to treeview"""
+        if orig and dest:
+            self.update_temp_data(orig, dest)
+            tree_view_data = self.controller.tree_view_data(descriptive, self.temp_data.loc[:, columns[1:]])
+            for row in tree_view_data:
+                tree.insert('', tk.END, values=row)
+        else: self.report_error()
+
+    def reset_tree_view(self, tree):
+        for row in tree.get_children():
+            tree.delete(row)
+
+    def descriptive(self, frame):
+        sub_frame = tk.Frame(frame, bg='#B0C4DE')
+        sub_frame.pack(fill= tk.BOTH, expand=True)
+        header = tk.Frame(sub_frame, bg='#B0C4DE')
+        header.pack(fill=tk.BOTH, expand=True)
+        small_frame = tk.Frame(sub_frame, bg='#B0C4DE')
+        small_frame.pack()
+        label = tk.Label(header, text='Descriptive statistic', font=self.my_font_big, bg='#B0C4DE')
+        label.pack(anchor=tk.CENTER, pady=10)
+        label2 = tk.Label(small_frame, text='Origin airport:', font=self.my_font_small, bg='#B0C4DE')
+        label2.grid(row=1,column=0,sticky='e')
+        label3 = tk.Label(small_frame, text='Destination airport:', font=self.my_font_small, bg='#B0C4DE')
+        label3.grid(row=2,column=0,sticky='e')
+
+        # ARRIVAL_DELAY, AIR_TIME, DISTANCE, ELAPSED_TIME
+        # mean std min 25,50,75 max
+        # columns, descriptive, label = self.controller.stat_columns()
+        columns = ['STATISTICS'] + self.num_col
+        descriptive = ['mean', 'std', 'min', 'q1', 'q2', 'q3', 'max']
+        label = ['Statistics'] + [x.lower().upper() for x in self.num_col]
+        tree = ttk.Treeview(frame, columns=columns, show='headings')
+        for i, l in zip(columns, label):
+            tree.heading(i, text=l)
+        tree.pack(expand=True, fill=tk.BOTH)
+        #
+        # treeXScroll = ttk.Scrollbar(frame, orient='horizontal')
+        # treeXScroll.configure(command=tree.xview)
+        # tree.configure(xscrollcommand=treeXScroll.set)
+        #
+        origin_airport = tk.StringVar()
+        pick_origin = ttk.Combobox(small_frame, textvariable=origin_airport, font=self.my_font_small)
+        pick_origin['values'] = self.controller.get_all_origin()
+        pick_origin['state'] = 'readonly'
+        pick_origin.grid(row=1, column=1, pady=5, padx=5)
+
+        dest_airport = tk.StringVar()
+        pick_dest = ttk.Combobox(small_frame, textvariable=dest_airport, font=self.my_font_small)
+        pick_dest['state'] = 'readonly'
+        pick_origin.bind("<<ComboboxSelected>>", lambda event: self.update_dest(pick_dest, origin_airport.get()))
+
+        pick_dest.grid(row=2, column=1, pady=5, padx=5)
+
+        button = tk.Button(small_frame, text='Generate', width=10,
+                           command=lambda:self.create_tree_view(tree, descriptive, columns,origin_airport.get(), dest_airport.get()),font=self.my_font_small)
+        button.grid(row=3, column=0, pady=20)#.pack(pady=20)
+        reset_btn = tk.Button(small_frame, text='Reset', width=10, command=lambda: self.reset_all_combo(small_frame),
+                              font=self.my_font_small)
+
+
+        reset_btn.grid(row=3, column=1,)#.pack(pady=10)
+        reset_btn.bind("<Button-1>",lambda e: self.reset_tree_view(tree))
+        scrollbar = ttk.Scrollbar(
+            frame,
+            orient='horizontal',
+            command=tree.xview
+        )
+        scrollbar.pack(side='bottom', fill='x')
+        tree['xscrollcommand'] = scrollbar.set
+
+    def clear_corr_header(self):
+        self.corr_label.configure(text=f'Correlation: ')
 
     def correlation_tab(self, frame):
         for i in range(2):
@@ -483,58 +601,81 @@ class UI1(UI):
         self.pick_x = ttk.Combobox(sub_frame, textvariable=self.dest_airport, font=self.my_font_small, width=22)
         self.pick_x['state'] = 'readonly'
         self.pick_x['values'] = self.controller.data.num_attributes()
-        self.pick_x.grid(row=2, column=0, pady=5)
+        self.pick_x.grid(row=2, column=0, pady=5, padx=5)
         self.y = tk.StringVar()  # pick y attribute
         self.pick_y = ttk.Combobox(sub_frame, textvariable=self.attributes, font=self.my_font_small, width=22)
         self.pick_y['state'] = 'readonly'
         self.pick_y['values'] = self.controller.data.num_attributes()
-        self.pick_y.grid(row=4, column=0, pady=5)
+        self.pick_y.grid(row=4, column=0, pady=5, padx=5)
 
         button = tk.Button(left_window, text='Generate', width=10,
                            command=lambda: self.draw_corr(self.pick_x.get(), self.pick_y.get(),self.ax2),
                            font=self.my_font_small)
-        button.pack(pady=35, ipady=10)
+        button.pack(pady=10)
 
         button.bind("<Button-1>",lambda e: self.display_corr(self.pick_x.get(), self.pick_y.get()), add='+')
-        Reset_btn = tk.Button(left_window, text='Reset', width=10, command=lambda: self.reset_all_combo(sub_frame), font=self.my_font_small)
-        Reset_btn.pack(ipady=10)
+        reset_btn = tk.Button(left_window, text='Reset', width=10, command=lambda: self.reset_all_combo(sub_frame, self.corr,self.ax2), font=self.my_font_small)
+        reset_btn.pack(pady=10)
+        reset_btn.bind("<Button-1>", lambda e: self.clear_corr_header(), add='+')
 
         button2 = tk.Button(left_window, text='Heatmap', width=10, font=self.my_font_small,command=self.draw_heat_map)
-        button2.pack(ipady=10,pady=35)
+        button2.pack(pady=10)
 
-        self.corr_label = tk.Label(right_window, text='Correlation: ', font=self.my_font_big, bg='#B0C4DE')
+        self.corr_label = tk.Label(right_window, text='Correlation: ', font=self.my_font_big, bg='#6CA6CD')
         self.corr_label.pack()
 
         fig, self.ax2 = plt.subplots(figsize=(8, 5))
         self.corr = FigureCanvasTkAgg(fig, master=right_window)
         self.corr.get_tk_widget().pack(padx=30, pady=30, ipadx=50, ipady=50, anchor=tk.CENTER)
 
-    #TODO
     def draw_line(self, sub_frame):
-        # print('line')
-        # print(4444,self.pick_attr2.get())
-        #
-        # print(self.temp_data[['ORIGIN_AIRPORT', 'DESTINATION_AIRPORT']])
+        self.graph.get_tk_widget().pack_forget()
+        fig, self.ax3 = plt.subplots(figsize=(8, 5))
+        self.graph = FigureCanvasTkAgg(fig, master=self.right_window3)
+        self.graph.get_tk_widget().pack(padx=30, pady=30, ipadx=50, ipady=50, anchor=tk.CENTER)
 
-        self.graph.draw()
-        self.ax3.clear()
-        abbre_month = [calendar.month_abbr[x] for x in range(1, 13)]
-        month_int = [x for x in range(1, 13)]
-        mean_attr_by_month_df = self.controller.df_groupby('MONTH', self.pick_attr2.get(), self.temp_data)  # dataframe
-        line_df = self.controller.data.merge_df_blank(mean_attr_by_month_df, self.pick_attr2.get())
-        self.ax3.plot(month_int, line_df[self.pick_attr2.get()], color=self.color_arr[2])
-        self.ax3.set_xlim(1, 13)
-        self.ax3.set_xticks(month_int, abbre_month)
-        self.ax3.set_title(f'Monthly trends of {self.pick_attr2.get().lower().replace('_',' ')}')
 
-        if self.pick_attr2.get() == 'DISTANCE':
-            self.ax3.set_ylabel(f'{self.pick_attr2.get()} (miles)')
+        print(5555,self.pick_attr2.get())
+        if self.pick_attr2.get():
+            self.graph.draw()
+            self.ax3.clear()
+            abbre_month = [calendar.month_abbr[x] for x in range(1, 13)]
+            month_int = [x for x in range(1, 13)]
+            mean_attr_by_month_df = self.controller.df_groupby('MONTH', self.pick_attr2.get(), self.temp_data)  # dataframe
+            line_df = self.controller.data.merge_df_blank(mean_attr_by_month_df, self.pick_attr2.get())
+            self.ax3.plot(month_int, line_df[self.pick_attr2.get()], color=self.color_arr[2])
+            self.ax3.set_xlim(1, 13)
+            self.ax3.set_xticks(month_int, abbre_month)
+            self.ax3.set_title(f'Monthly trends of {self.pick_attr2.get().lower().replace("_", " ")}')
+            if self.pick_attr2.get() == 'DISTANCE':
+                self.ax3.set_ylabel(f'{self.pick_attr2.get()} (miles)')
+            else:
+                self.ax3.set_ylabel(f'{self.pick_attr2.get()} (minutes)')
+            self.ax3.set_xlabel('Month')
+            self.graph.draw()
+            self.reset_all_combo(sub_frame)
         else:
-            self.ax3.set_ylabel(f'{self.pick_attr2.get()} (minutes)')
-        self.ax3.set_xlabel('Month')
-        self.graph.draw()
-        self.reset_all_combo(sub_frame)
+            self.report_error()
 
+    def delayed_pie(self):
+        if self.dest_airport2.get():
+            total_flights = len(self.temp_data)
+            delayed = self.controller.delayed_counts(self.temp_data)
+            normal_flights = total_flights - delayed
+
+            temp = self.controller.data.create_series(col=['delayed','cancelled','normal flights'], values=[delayed, normal_flights])
+            self.ax3.clear()
+            self.graph.draw()
+
+            self.ax3.pie(temp, labels=temp.index, startangle=90, counterclock=False,
+                   autopct='%1.1f%%',colors=self.color_arr)
+
+            self.ax3.legend(bbox_to_anchor=(0.79, 1))
+
+            self.ax3.set_title('Pie chart of Delayed and Normal Flights')
+            self.graph.draw()
+        else:
+            self.report_error()
 
     def overall_pie(self):
         total_flights = len(self.temp_data)
@@ -545,17 +686,15 @@ class UI1(UI):
         normal_flights = total_flights - (delayed + cancelled)
 
         temp = self.controller.data.create_series(col=['delayed','cancelled','normal flights'], values=[delayed, cancelled, normal_flights])
-        print(temp)
-        print(self.temp_data[['ORIGIN_AIRPORT', 'DESTINATION_AIRPORT']])
         self.ax3.clear()
         self.graph.draw()
 
         self.ax3.pie(temp, labels=temp.index, startangle=90, counterclock=False,
-               autopct='%1.1f%%')
+               autopct='%1.1f%%',colors=self.color_arr)
 
         self.ax3.legend(bbox_to_anchor=(0.79, 1))
 
-        self.ax3.set_title('airport: from route ABQ->DFW')
+        self.ax3.set_title('Pie chart of Delayed, Cancelled, and Normal Flights')
         self.graph.draw()
 
     def cancelled_pie(self):
@@ -565,12 +704,11 @@ class UI1(UI):
         temp = self.controller.data.create_series(col=['cancelled', 'normal flights'],
                                                   values=[cancelled, normal_flights])
         self.ax3.pie(temp, labels=temp.index, startangle=90, counterclock=False,
-               autopct='%1.1f%%')
-        #, textprops={'color':'w'}
+               autopct='%1.1f%%',colors=self.color_arr)
 
         self.ax3.legend(bbox_to_anchor=(0.79, 1))
 
-        self.ax3.set_title('Pie chart of cancelled flights vs non-cancelled')
+        self.ax3.set_title('A pie chart comparing cancelled and non-cancelled flights')
         self.graph.draw()
 
     def draw_pie(self,sub_frame):
@@ -579,29 +717,27 @@ class UI1(UI):
         self.graph.draw()
         if atr == 'overall':
             self.overall_pie()
-        elif atr == 'cancelled vs non cancelled':
+        elif atr == 'Cancelled vs not cancelled flights':
             self.cancelled_pie()
+        else:
+            self.delayed_pie()
 
         self.reset_all_combo(sub_frame)
 
 
     def on_click_atr(self, atr):
-        num_col = ['DEPARTURE_DELAY', 'TAXI_OUT', 'WHEELS_OFF',
-                   'ELAPSED_TIME', 'AIR_TIME', 'DISTANCE', 'WHEELS_ON', 'TAXI_IN',
-                   'SCHEDULED_ARRIVAL', 'ARRIVAL_TIME', 'ARRIVAL_DELAY', 'CANCELLED']
+        pie_attr = ['overall', 'Cancelled vs not cancelled flights', 'Delayed vs not delayed flights']
+        self.pick_attr2['values'] = self.num_col if atr == 'line graph' else pie_attr
 
-        pie_attr = ['overall', 'cancelled vs non cancelled']
-        self.pick_attr2['values'] = num_col if atr == 'line graph' else pie_attr
-
+    def check_all_atr(self,widget):
+        for child in widget.winfo_children():
+            if isinstance(child, ttk.Combobox) and child.cget('textvariable') == '':
+                print(444,child['textvariable'])
+                self.report_error()
 
     def other_graphs_tab(self, frame):
-        left_window, right_window, sub_frame = self.two_side_window(frame, 'Create Visualization')
-        # num_col = ['DEPARTURE_DELAY', 'TAXI_OUT', 'WHEELS_OFF',
-        #            'ELAPSED_TIME', 'AIR_TIME', 'DISTANCE', 'WHEELS_ON', 'TAXI_IN',
-        #            'SCHEDULED_ARRIVAL', 'ARRIVAL_TIME', 'ARRIVAL_DELAY', 'CANCELLED']
-        #
-        # pie_attr = ['overall', 'cancelled vs non cancelled']
-        name = ['Type of graph:', 'Airline:', 'Origin airport:', 'Destination airport:', 'Attribute: ']
+        left_window, self.right_window3, sub_frame = self.two_side_window(frame, 'Create Visualization')
+        name = ['Graph Type:', 'Airline:', 'Origin airport:', 'Destination airport:', 'Attribute: ']
         t=0
         for i in range(1,10,2):
             label = tk.Label(sub_frame, text=name[t], font=self.my_font_small, bg='#B0C4DE')
@@ -611,14 +747,14 @@ class UI1(UI):
         self.type = tk.StringVar()
         self.pick_type2 = ttk.Combobox(sub_frame, textvariable=self.type, font=self.my_font_small)
         self.pick_type2['state'] = 'readonly'
-        self.pick_type2.grid(row=2, column=0, pady=5)
+        self.pick_type2.grid(row=2, column=0, pady=5, padx=5)
         self.pick_type2['values'] = ['line graph', 'pie graph']
         self.pick_type2.bind("<<ComboboxSelected>>", lambda event:self.on_click_atr(self.type.get()))
 
         self.airlines2 = tk.StringVar()
         self.pick_airline2 = ttk.Combobox(sub_frame, textvariable=self.airlines2, font=self.my_font_small)
         self.pick_airline2['state'] = 'readonly'
-        self.pick_airline2.grid(row=4, column=0, pady=5)
+        self.pick_airline2.grid(row=4, column=0, pady=5, padx=5)
         self.pick_airline2['values'] = self.controller.get_all_airlines()
 
         self.origin_airport2 = tk.StringVar()
@@ -626,19 +762,19 @@ class UI1(UI):
         self.pick_airline2.bind("<<ComboboxSelected>>",
                                lambda event: self.controller.get_airline_data(self.pick_airline2.get(), widget=2))  # set values
         self.pick_origin2['state'] = 'readonly'
-        self.pick_origin2.grid(row=6, column=0, pady=5)
+        self.pick_origin2.grid(row=6, column=0, pady=5, padx=5)
 
         self.dest_airport2 = tk.StringVar()
         self.pick_dest2 = ttk.Combobox(sub_frame, textvariable=self.dest_airport2, font=self.my_font_small)
         self.pick_origin2.bind("<<ComboboxSelected>>",
                               lambda x: self.controller.get_origin_data(self.airlines2.get(), self.origin_airport2.get(), widget=2))
         self.pick_dest2['state'] = 'readonly'
-        self.pick_dest2.grid(row=8, column=0, pady=5)
+        self.pick_dest2.grid(row=8, column=0, pady=5, padx=5)
         self.pick_dest2.bind("<<ComboboxSelected>>", lambda x: self.controller.get_dest_data(self.dest_airport2.get()))
 
         self.attribute2 = tk.StringVar()
         self.pick_attr2 = ttk.Combobox(sub_frame, textvariable=self.attribute2, font=self.my_font_small)
-        self.pick_attr2.grid(row=10,column=0, pady=5)
+        self.pick_attr2.grid(row=10,column=0, pady=5, padx=5)
         self.pick_attr2['state'] = 'readonly'
 
 
@@ -646,88 +782,127 @@ class UI1(UI):
 
         button = tk.Button(left_window, text='Generate', width=10,
                            font=self.my_font_small, command=lambda: self.draw_line(sub_frame) if self.pick_type2.get() =='line graph' else self.draw_pie(sub_frame))
-        button.pack(pady=35, ipady=10)
+        button.pack(pady=10)
+        button.bind('<Button-1>',lambda e:self.check_all_atr(sub_frame), add='+')
 
-        Reset_btn = tk.Button(left_window, text='Reset', width=10, command=lambda: self.reset_all_combo(sub_frame), font=self.my_font_small)
-        Reset_btn.pack(ipady=10)
+        reset_btn = tk.Button(left_window, text='Reset', width=10, command=lambda: self.reset_all_combo(sub_frame, self.graph), font=self.my_font_small)
+        reset_btn.pack(pady=10)
 
-
+        reset_btn.bind("<Button-1>",lambda e: self.reset_canvas(self.ax3, self.graph), add='+')
 
 
         fig, self.ax3 = plt.subplots(figsize=(8, 5))
-        self.graph = FigureCanvasTkAgg(fig, master=right_window)
+        self.graph = FigureCanvasTkAgg(fig, master=self.right_window3)
         self.graph.get_tk_widget().pack(padx=30, pady=30, ipadx=50, ipady=50, anchor=tk.CENTER)
 
+    def reset_canvas(self, ax, canvas):
+        ax.clear()
+        # canvas.draw()
+        canvas.get_tk_widget().delete("all")
 
 
 
-    def distribution_tab(self, frame1_2, left_window):
+
+    def distribution_tab(self,left_window):
+        print('disst')
+
         text_label = ['Origin airport:', 'Destination airport:', 'Attribute:']
-        # self.my_font_big = ('Georgia', 20)
-        # self.my_font_small = ('Georgia', 16)
-        Label = tk.Label(frame1_2, text='Distribution graph:', bg='#B0C4DE', font=self.my_font_big)
-        Label.grid(row=0, column=0, sticky='w', pady=30)
-        Label = tk.Label(frame1_2, text='Airlines:', bg='#B0C4DE', font=self.my_font_small)
+        Label = tk.Label(self.frame1_2, text='Distribution', bg='#B0C4DE', font=self.my_font_big)
+        Label.grid(row=0, columnspan=1, sticky='n', pady=10)
+        Label = tk.Label(self.frame1_2, text='Airlines:', bg='#B0C4DE', font=self.my_font_small)
         Label.grid(row=1, column=0, sticky='w')
         i = 0
         for row in range(3, 9, 2):
-            Label = tk.Label(frame1_2, text=text_label[i], bg='#B0C4DE', font=self.my_font_small)
+            Label = tk.Label(self.frame1_2, text=text_label[i], bg='#B0C4DE', font=self.my_font_small)
             Label.grid(row=row, column=0, sticky='w')
             i += 1
 
         self.airlines = tk.StringVar()
-        self.pick_airline = ttk.Combobox(frame1_2, textvariable=self.airlines, font=self.my_font_small)
+        self.pick_airline = ttk.Combobox(self.frame1_2, textvariable=self.airlines, font=self.my_font_small)
         self.pick_airline['state'] = 'readonly'
-        self.pick_airline.grid(row=2, column=0, pady=5)
+        self.pick_airline.grid(row=2, column=0, pady=5, padx=5)
         self.pick_airline['values'] = self.controller.get_all_airlines()
 
         self.origin_airport = tk.StringVar()
-        self.pick_origin = ttk.Combobox(frame1_2, textvariable=self.origin_airport, font=self.my_font_small)
+        self.pick_origin = ttk.Combobox(self.frame1_2, textvariable=self.origin_airport, font=self.my_font_small)
         self.pick_airline.bind("<<ComboboxSelected>>",
-                               lambda event: self.controller.get_airline_data(self.pick_airline.get()))  # set values
+                               lambda event: self.controller.get_airline_data(self.pick_airline.get()), add='+')  # set values
+        # self.pick_origin['state'] = 'readonly'
         self.pick_origin['state'] = 'readonly'
-        self.pick_origin.grid(row=4, column=0, pady=5)
+        self.pick_origin.grid(row=4, column=0, pady=5, padx=5)
 
         self.dest_airport = tk.StringVar()
-        self.pick_dest = ttk.Combobox(frame1_2, textvariable=self.dest_airport, font=self.my_font_small)
+        self.pick_dest = ttk.Combobox(self.frame1_2, textvariable=self.dest_airport, font=self.my_font_small)
         self.pick_origin.bind("<<ComboboxSelected>>",
-                              lambda x: self.controller.get_origin_data(self.airlines.get(), self.origin_airport.get()))
+                              lambda x: self.controller.get_origin_data(self.airlines.get(), self.origin_airport.get()), add='+')
+
+
         self.pick_dest['state'] = 'readonly'
-        self.pick_dest.grid(row=6, column=0, pady=5)
+        # self.pick_dest['state'] = 'readonly'
+        self.pick_dest.grid(row=6, column=0, pady=5, padx=5)
         self.pick_dest.bind("<<ComboboxSelected>>", lambda x: self.controller.get_dest_data(self.dest_airport.get()))
 
         self.attributes = tk.StringVar()  # pick attribute
-        self.pick_atr = ttk.Combobox(frame1_2, textvariable=self.attributes, font=self.my_font_small)
+        self.pick_atr = ttk.Combobox(self.frame1_2, textvariable=self.attributes, font=self.my_font_small)
         self.pick_atr['state'] = 'readonly'
         self.pick_atr['values'] = self.controller.get_all_attributes()
-        self.pick_atr.grid(row=8, column=0, pady=5)
+        self.pick_atr.grid(row=8, column=0, pady=5, padx=5)
 
+        # button = tk.Button(left_window, text='Generate', width=10,
+        #                    command=lambda: self.draw_dist(self.temp_data, self.attributes.get()),
+        #                    font=self.my_font_small)
         button = tk.Button(left_window, text='Generate', width=10,
-                           command=lambda: self.draw_dist(self.temp_data, self.attributes.get()),
                            font=self.my_font_small)
-        button.pack(pady=35, ipady=10)
 
-        Reset_btn = tk.Button(left_window, text='Reset', width=10, command=self.reset, font=self.my_font_small)
-        Reset_btn.pack(ipady=10)
+        button.bind('<Button-1>',lambda e: self.check_all_atr(self.frame1_2), add='+')
+        button.bind('<Button-1>', lambda e: self.draw_dist(self.temp_data, self.attributes.get()), add='+')
+        button.pack(pady=10)
+
+        Reset_btn = tk.Button(left_window, text='Reset', width=10, command= lambda: self.reset_all_combo(self.frame1_2,self.canvas,self.ax), font=self.my_font_small)
+        Reset_btn.pack(pady=10)
+
+    # def unlock_combo(self, child):
+    #     child['state'] = 'readonly'
+    # def lock_all_combo(self, widget):
+    #     print('lock')
+    #     for child in widget.winfo_children():
+    #         if isinstance(child, ttk.Combobox):
+    #             child['state'] = 'disabled'
+    # def check_all_combo(self, widget):
+    #     print('lock')
+    #     for child in widget.winfo_children():
+    #         if isinstance(child, ttk.Combobox) and child['values'] == '':
+    #             return self.report_error()
+
+
 
     def draw_dist(self, data, attribute):
         self.ax.clear()
         self.canvas.draw()
+        print(56667,self.airlines.get()=='',self.dest_airport.get(),self.origin_airport.get(), attribute)
         if attribute != '' and self.airlines.get() != '' and self.dest_airport.get() != '' and self.origin_airport.get() != '':
+            print('ENTER')
             self.ax.hist(data[attribute], color=self.color_arr[1])
             # print(self.temp_data.loc[:,['ORIGIN_AIRPORT','DESTINATION_AIRPORT','AIRLINE']])
             self.ax.set_title(
-                f'Distribution of airline {self.airlines.get()} on {attribute} from {self.origin_airport.get()} to {self.dest_airport.get()} airport')
+                f'Distribution of airline {self.airlines.get()} on {attribute} from {self.origin_airport.get()} to {self.dest_airport.get()} airport', fontsize=11)
             self.ax.set_ylabel('Frequency', fontsize=8)
             self.ax.set_xlabel(attribute.lower().upper(), fontsize=8)
-        self.canvas.draw()
-        self.reset_combo()
+            self.canvas.draw()
+            self.reset_all_combo(self.frame1_2)
+        else: self.report_error()
 
-    def reset_all_combo(self, widget):
+
+
+    def reset_all_combo(self, widget, canvas='', ax=''):
+        if ax and canvas:
+            ax.clear()
+            canvas.draw()
         for child in widget.winfo_children():
-            if isinstance(child,ttk.Combobox):
+            if isinstance(child, ttk.Combobox):
                 child.set('')
-                # print(type(child))
+        self.temp_data = None
+
 
 
     def reset_combo(self):
@@ -748,13 +923,15 @@ class UI1(UI):
         self.pick_dest.set('')
         self.temp_data = None
 
-    def update_dest(self, pick_dest):
-        pick_dest['values'] = self.controller.get_all_dest(self.origin_airport.get())
+    # def update_dest(self, pick_dest):
+    #     pick_dest['values'] = self.controller.get_all_dest(self.origin_airport.get())
+
+    def update_dest(self, pick_dest, origin):
+        pick_dest['values'] = self.controller.data.all_destination(origin)
+
 
     def init_components(self):
-        # print(1111)
-        # print(self.color_arr[1])
-        # self.configure(bg='red')
+        print('init')
         self.menubar()
         self.notebook = ttk.Notebook(self, width=900, height=500, style="Custom.TNotebook")  # width=1200,height=800
         self.notebook.pack(pady=10, expand=True, fill="both")
@@ -768,13 +945,14 @@ class UI1(UI):
         frame1.pack(fill='both', expand=True)
         frame2.pack(fill='both', expand=True)
         frame3.pack(fill='both', expand=True)
+        frame4.pack(fill='both', expand=True)
 
         left_window = tk.Frame(frame1)
 
-        right_window = tk.Frame(frame1, width=800, height=1200)  # ,width=800, height=1200
+        right_window = tk.Frame(frame1, width=800, height=1200)
         right_window.configure(bg='#6CA6CD')
-        frame1_2 = tk.Frame(left_window, background='#B0C4DE')
-        frame1_2.pack(ipady=10, fill="both")
+        self.frame1_2 = tk.Frame(left_window, background='#B0C4DE')
+        self.frame1_2.pack(ipady=10, fill="both")
 
 
         # add frames to notebook
@@ -789,31 +967,22 @@ class UI1(UI):
         self.canvas = FigureCanvasTkAgg(fig, master=right_window)
         self.canvas.get_tk_widget().pack(padx=30, pady=30, ipadx=50, ipady=50, anchor=tk.CENTER)
 
-        # # , image = self.generate_btn self.bg = Image.open('page1.png') self.page1_tk = ImageTk.PhotoImage(self.bg)
-        # self.canvas2 = tk.Canvas(left_window,bg='grey',width=400,height=600,bd= 0, highlightthickness= 0,
-        # relief= 'ridge') self.canvas2.pack(fill='both',expand=True)
-        #
-        # # # Place the image on the Canvas
-        # self.canvas2.create_image(0,0,image=self.page1_tk,anchor='nw')
 
-        # button = ttk.Button(self.canvas2, text='Generate', command=self.draw_graph)
-        # button.place(x=70,y=500)
-        # Reset_btn = tk.Button(self.canvas2,text='Reset',command=self.reset,bg='red')
-        # Reset_btn.place(x=230,y=500)
-
-        self.distribution_tab(frame1_2, left_window)
+        self.distribution_tab(left_window)
         self.other_graphs_tab(frame3)
         self.correlation_tab(frame2)
+        self.descriptive(frame4)
 
         # self.notebook.columnconfigure((0, 1), weight=1)
         left_window.pack(side=tk.LEFT, fill="both", expand=True, anchor=tk.SW)
         right_window.pack(side=tk.RIGHT, fill="both", expand=True)
-        left_window.configure(bg='#6E7B8B')
+        left_window.configure(bg='#B0C4DE')
 
         # self.notebook.bind("<<NotebookTabChanged>>", lambda e: self.reset_combo())
         # self.correlation_tab(frame)
         # left_window.grid(row=0,column=0, columnspan=3,sticky='w')
         # right_window.grid(row=0,column=3,columnspan=2) #sticky='e'
-
+    def report_error(self):
+        messagebox.showwarning('Warning', 'Please select all remaining field(s)')
     def run(self):
         self.mainloop()
